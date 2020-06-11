@@ -1,10 +1,9 @@
-#' @name blblm
-#' @title blblm
 #' @import purrr
 #' @import stats
 #' @importFrom utils capture.output
 #' @importFrom utils read.csv
 #' @importFrom magrittr %>%
+#'
 #' @details
 #' Linear Regression with Little Bag of Bootstraps
 "_PACKAGE"
@@ -48,9 +47,6 @@ blblm <- function(formula, data, m = 10, B = 5000) {
 }
 
 #' read data in to one list
-#'
-#' @param filename "name"
-#' @param n integer
 data <- function(filename,n){
   df <- file.path(filename, list.files(filename))
   read.csv(df[n])
@@ -58,8 +54,6 @@ data <- function(filename,n){
 
 
 #' split data into m parts of approximated equal sizes
-#'
-#' @param m integer
 split_data <- function(data, m) {
   df <- vroom(list_of_files, .id = "FileName")
   idx <- sample.int(m, nrow(data), replace = TRUE)
@@ -68,19 +62,12 @@ split_data <- function(data, m) {
 
 
 #' compute the estimates
-#'
-#' @param n integer
-#' @param B integer
-#'
 lm_each_subsample <- function(formula, data, n, B) {
   replicate(B, lm_each_boot(formula, data, n), simplify = FALSE)
 }
 
 
 #' compute the regression estimates for a blb dataset
-#'
-#' @param n integer
-#'
 lm_each_boot <- function(formula, data, n) {
   freqs <- rmultinom(1, n, rep(1, nrow(data)))
   lm1(formula, data, freqs)
@@ -88,9 +75,6 @@ lm_each_boot <- function(formula, data, n) {
 
 
 #' estimate the regression estimates based on given the number of repetitions
-#'
-#' @param freqs vector
-#
 lm1 <- function(formula, data, freqs) {
   # drop the original closure of formula,
   # otherwise the formula will pick a wront variable from the global scope.
@@ -101,18 +85,12 @@ lm1 <- function(formula, data, freqs) {
 
 
 #' compute the coefficients from fit
-#'
-#' @param fit model
-#'
 blbcoef <- function(fit) {
   coef(fit)
 }
 
 
 #' compute sigma from fit
-#'
-#' @param fit model
-#'
 blbsigma <- function(fit) {
   p <- fit$rank
   y <- model.extract(fit$model, "response")
@@ -122,6 +100,7 @@ blbsigma <- function(fit) {
 }
 
 #' @export
+#' @return character
 #' @method print blblm
 print.blblm <- function(x, ...) {
   cat("blblm model:", capture.output(x$formula))
@@ -131,8 +110,11 @@ print.blblm <- function(x, ...) {
 
 #' compute sigma from fit
 #'
-#' @param fit model
-#'
+#' @param object model
+#' @param confidence boolean vector
+#' @param level confidencial level
+#' @param ... est
+#' @return double
 #' @export
 #' @method sigma blbglm
 sigma.blblm <- function(fit, confidence = FALSE, level = 0.95, ...) {
@@ -151,28 +133,31 @@ sigma.blblm <- function(fit, confidence = FALSE, level = 0.95, ...) {
 
 #' compute coef from fit
 #'
-#' @param fit model
-#'
+#' @param object model
+#' @param ... est
+#' @return tibble
 #' @export
 #' @method coef blbglm
-coef.blblm <- function(fit, ...) {
-  est <- fit$estimates
+coef.blblm <- function(object, ...) {
+  est <- object$estimates
   map_mean(est, ~ map_cbind(., "coef") %>% rowMeans())
 }
 
 
 #' compute confidence interval from fit
-#'
-#' @param fit model
-#'
+#' @param object model
+#' @param parm boolean vector
+#' @param level cofidential level
+#' @param ... est
+#' @return out tibble
 #' @export
 #' @method confint blbglm
-confint.blblm <- function(fit, parm = NULL, level = 0.95, ...) {
+confint.blblm <- function(object, parm = NULL, level = 0.95, ...) {
   if (is.null(parm)) {
-    parm <- attr(terms(fit$formula), "term.labels")
+    parm <- attr(terms(object$formula), "term.labels")
   }
   alpha <- 1 - level
-  est <- fit$estimates
+  est <- object$estimates
   out <- map_rbind(parm, function(p) {
     map_mean(est, ~ map_dbl(., list("coef", p)) %>% quantile(c(alpha / 2, 1 - alpha / 2)))
   })
@@ -186,7 +171,11 @@ confint.blblm <- function(fit, parm = NULL, level = 0.95, ...) {
 #' compute confidence interval from fit
 #'
 #' @param fit model
-#'
+#' @param new_data matrics/vector
+#' @param confidence boolean vector
+#' @param level confidential level
+#' @param ... est
+#' @return tibble
 #' @export
 #' @method confint blbglm
 predict.blblm <- function(fit, new_data, confidence = FALSE, level = 0.95, ...) {

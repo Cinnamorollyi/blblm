@@ -7,7 +7,16 @@
 \method{sigma}{blbglm}(fit, confidence = FALSE, level = 0.95, ...)
 }
 \arguments{
-\item{fit}{model}
+\item{confidence}{boolean vector}
+
+\item{level}{confidencial level}
+
+\item{...}{est}
+
+\item{object}{model}
+}
+\value{
+double
 }
 \description{
 compute sigma from fit

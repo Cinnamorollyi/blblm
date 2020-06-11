@@ -4,10 +4,19 @@
 \alias{sigma.blbglm}
 \title{compute sigma from fit}
 \usage{
-\method{sigma}{blbglm}(fit, confidence = FALSE, level = 0.95, ...)
+\method{sigma}{blbglm}(object, confidence = FALSE, level = 0.95, ...)
 }
 \arguments{
-\item{fit}{model}
+\item{object}{model}
+
+\item{confidence}{boolean vector}
+
+\item{level}{confidencial level}
+
+\item{...}{est}
+}
+\value{
+double
 }
 \description{
 compute sigma from fit

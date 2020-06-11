@@ -1,5 +1,3 @@
-#' @name blglml
-#' @title blglml
 #' @import purrr
 #' @import stats
 #' @importFrom magrittr %>%
@@ -46,9 +44,6 @@ blbglm <- function(formula, data, m = 10, B = 5000) {
 }
 
 #' read data in to one list
-#'
-#' @param filename "name"
-#' @param n integer
 data <- function(filename,n){
   df <- file.path(filename, list.files(filename))
   read.csv(df[n])
@@ -57,9 +52,6 @@ data <- function(filename,n){
 
 
 #' split data into m parts of approximated equal sizes
-#'
-#' @param m integer
-#'
 split_data <- function(data, m) {
   idx <- sample.int(m, nrow(data), replace = TRUE)
   data %>% split(idx)
@@ -67,19 +59,12 @@ split_data <- function(data, m) {
 
 
 #' compute the estimates
-#'
-#' @param n integer
-#' @param B integer
-#'
 glm_each_subsample <- function(formula, data, n, B) {
   replicate(B, glm_each_boot(formula, data, n), simplify = FALSE)
 }
 
 
 #' compute the regression estimates for a blb dataset
-#'
-#' @param n integer
-#'
 glm_each_boot <- function(formula, data, n) {
   freqs <- rmultinom(1, n, rep(1, nrow(data)))
   glm1(formula, data, freqs)
@@ -87,9 +72,6 @@ glm_each_boot <- function(formula, data, n) {
 
 
 #' estimate the regression estimates based on given the number of repetitions
-#'
-#' @param freqs vector
-#'
 glm1 <- function(formula, data, freqs) {
   # drop the original closure of formula,
   # otherwise the formula will pick a wront variable from the global scope.
@@ -100,18 +82,12 @@ glm1 <- function(formula, data, freqs) {
 
 
 #' compute the coefficients from fit
-#'
-#' @param fit model
-#'
 blbcoef <- function(fit) {
   coef(fit)
 }
 
 
 #' compute sigma from fit
-#'
-#' @param fit model
-#'
 blbsigma <- function(fit) {
   p <- fit$rank
   y <- model.extract(fit$model, "response")
@@ -130,12 +106,15 @@ print.blbglm <- function(x, ...) {
 
 #' compute sigma from fit
 #'
-#' @param fit model
-#'
+#' @param object model
+#' @param confidence boolean vector
+#' @param level confidencial level
+#' @param ... est
+#' @return double
 #' @export
 #' @method sigma blbglm
-sigma.blbglm <- function(fit, confidence = FALSE, level = 0.95, ...) {
-  est <- fit$estimates
+sigma.blbglm <- function(object, confidence = FALSE, level = 0.95, ...) {
+  est <- object$estimates
   sigma <- mean(map_dbl(est, ~ mean(map_dbl(., "sigma"))))
   if (confidence) {
     alpha <- 1 - 0.95
@@ -150,27 +129,31 @@ sigma.blbglm <- function(fit, confidence = FALSE, level = 0.95, ...) {
 
 #' compute coef from fit
 #'
-#' @param fit model
-#'
+#' @param object model
+#' @param ... est
+#' @return tibble
 #' @export
 #' @method coef blbglm
-coef.blbglm <- function(fit, ...) {
-  est <- fit$estimates
+coef.blbglm <- function(object, ...) {
+  est <- object$estimates
   map_mean(est, ~ map_cbind(., "coef") %>% rowMeans())
 }
 
 #' compute confidence interval from fit
 #'
-#' @param fit model
-#'
+#' @param object model
+#' @param parm boolean vector
+#' @param level cofidential level
+#' @param ... est
+#' @return list
 #' @export
 #' @method confint blbglm
-confint.blbglm <- function(fit, parm = NULL, level = 0.95, ...) {
+confint.blbglm <- function(object, parm = NULL, level = 0.95, ...) {
   if (is.null(parm)) {
-    parm <- attr(terms(fit$formula), "term.labels")
+    parm <- attr(terms(object$formula), "term.labels")
   }
   alpha <- 1 - level
-  est <- fit$estimates
+  est <- object$estimates
   out <- map_rbind(parm, function(p) {
     map_mean(est, ~ map_dbl(., list("coef", p)) %>% quantile(c(alpha / 2, 1 - alpha / 2)))
   })
@@ -185,11 +168,15 @@ confint.blbglm <- function(fit, parm = NULL, level = 0.95, ...) {
 #' predict bootstrap from fit
 #'
 #' @param fit model
-#'
+#' @param new_data matrics/vector
+#' @param confidence boolean vector
+#' @param level confidential level
+#' @param ... est
+#' @return tibble
 #' @export
 #' @method predict blbglm
-predict.blbglm <- function(fit, new_data, confidence = FALSE, level = 0.95, ...) {
-  est <- fit$estimates
+predict.blbglm <- function(object, new_data, confidence = FALSE, level = 0.95, ...) {
+  est <- object$estimates
   X <- model.matrix(reformulate(attr(terms(fit$formula), "term.labels")), new_data)
   if (confidence) {
     map_mean(est, ~ map_cbind(., ~ X %*% .$coef) %>%

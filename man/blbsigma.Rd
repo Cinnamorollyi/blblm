@@ -8,9 +8,6 @@ blbsigma(fit)
 
 blbsigma(fit)
 }
-\arguments{
-\item{fit}{model}
-}
 \description{
 compute sigma from fit
 

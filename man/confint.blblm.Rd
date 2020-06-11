@@ -4,10 +4,19 @@
 \alias{confint.blblm}
 \title{compute confidence interval from fit}
 \usage{
-\method{confint}{blbglm}(fit, parm = NULL, level = 0.95, ...)
+\method{confint}{blbglm}(object, parm = NULL, level = 0.95, ...)
 }
 \arguments{
-\item{fit}{model}
+\item{object}{model}
+
+\item{parm}{boolean vector}
+
+\item{level}{cofidential level}
+
+\item{...}{est}
+}
+\value{
+out tibble
 }
 \description{
 compute confidence interval from fit

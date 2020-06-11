@@ -4,10 +4,15 @@
 \alias{coef.blbglm}
 \title{compute coef from fit}
 \usage{
-\method{coef}{blbglm}(fit, ...)
+\method{coef}{blbglm}(object, ...)
 }
 \arguments{
-\item{fit}{model}
+\item{object}{model}
+
+\item{...}{est}
+}
+\value{
+tibble
 }
 \description{
 compute coef from fit

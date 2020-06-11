@@ -8,6 +8,17 @@
 }
 \arguments{
 \item{fit}{model}
+
+\item{new_data}{matrics/vector}
+
+\item{confidence}{boolean vector}
+
+\item{level}{confidential level}
+
+\item{...}{est}
+}
+\value{
+tibble
 }
 \description{
 compute confidence interval from fit

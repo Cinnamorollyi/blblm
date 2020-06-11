@@ -4,10 +4,21 @@
 \alias{predict.blbglm}
 \title{predict bootstrap from fit}
 \usage{
-\method{predict}{blbglm}(fit, new_data, confidence = FALSE, level = 0.95, ...)
+\method{predict}{blbglm}(object, new_data, confidence = FALSE, level = 0.95, ...)
 }
 \arguments{
+\item{new_data}{matrics/vector}
+
+\item{confidence}{boolean vector}
+
+\item{level}{confidential level}
+
+\item{...}{est}
+
 \item{fit}{model}
+}
+\value{
+tibble
 }
 \description{
 predict bootstrap from fit
