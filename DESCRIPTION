@@ -1,18 +1,22 @@
 Package: blblm
 Type: Package
-Title: What the Package Does (Title Case)
+Title: bootstrap (Title Case)
 Version: 0.1.0
-Author: Who wrote it
+Author: Lanyi Zhang
 Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
+Description: This pakage is going to bootstrap for linear regression
+ and logistic regression
     Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests: 
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    knitr,
+    rmarkdown
 Imports: 
     purrr,
     magrittr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
+VignetteBuilder: knitr
