@@ -17,9 +17,11 @@ coef(fit1)
 sigma(fit1)
 ```
 ```{r}
+library(purrr)
 fit2 <- glm(mpg~cyl,data = mtcars)
 coef(fit2)
 sigma(fit2)
+
 ```
 
 ```{r, include = FALSE}
@@ -29,6 +31,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(blblm)
+```{r}
+data <- function(filename,n){
+  df <- file.path(filename, list.files(filename))
+  read.csv(df[n])
+}
+data = data("files",2)
 ```
+

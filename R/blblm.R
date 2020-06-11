@@ -1,5 +1,9 @@
+#' @name blblm
+#' @title blblm
 #' @import purrr
 #' @import stats
+#' @importFrom utils capture.output
+#' @importFrom utils read.csv
 #' @importFrom magrittr %>%
 #' @details
 #' Linear Regression with Little Bag of Bootstraps
@@ -11,7 +15,15 @@
 utils::globalVariables(c("."))
 
 
+#' Using parallel/normal function to do bootstrap
+#'
+#' @param data file
+#' @param Cluster cores
+#'
+#' @return list
 #' @export
+#' @method two bootstrap
+#' @example blblm(mpg~cyl,data = mtcars)
 library(parallel)
 library(future)
 library(furrr)
@@ -25,7 +37,6 @@ blblm_par <- function(formula, data, m = 10, B = 5000, Cluster) {
   invisible(res)
 }
 
-#'@export
 blblm <- function(formula, data, m = 10, B = 5000) {
   data_list <- split_data(data, m)
   estimates <- map(
@@ -35,27 +46,20 @@ blblm <- function(formula, data, m = 10, B = 5000) {
   class(res) <- "blblm"
   invisible(res)
 }
-#' read data
-sigma.blblm <- function(data) {
-  sigma <- mean(map_dbl(est, ~ mean(map_dbl(., "sigma"))))
-  if (confidence) {
-    alpha <- 1 - 0.95
-    limits <- est %>%
-      map_mean(~ quantile(map_dbl(., "sigma"), c(alpha / 2, 1 - alpha / 2))) %>%
-      set_names(NULL)
-    return(c(sigma = sigma, lwr = limits[1], upr = limits[2]))
-  } else {
-    return(sigma)
-  }
+
+#' read data in to one list
+#'
+#' @param filename "name"
+#' @param n integer
+data <- function(filename,n){
+  df <- file.path(filename, list.files(filename))
+  read.csv(df[n])
 }
 
-#' read data
-data <- function(list_of_files,n){
-  df <- vroom(list_of_files, .id = "FileName")
-  df[[n]]
-}
 
 #' split data into m parts of approximated equal sizes
+#'
+#' @param m integer
 split_data <- function(data, m) {
   df <- vroom(list_of_files, .id = "FileName")
   idx <- sample.int(m, nrow(data), replace = TRUE)
@@ -64,12 +68,19 @@ split_data <- function(data, m) {
 
 
 #' compute the estimates
+#'
+#' @param n integer
+#' @param B integer
+#'
 lm_each_subsample <- function(formula, data, n, B) {
   replicate(B, lm_each_boot(formula, data, n), simplify = FALSE)
 }
 
 
 #' compute the regression estimates for a blb dataset
+#'
+#' @param n integer
+#'
 lm_each_boot <- function(formula, data, n) {
   freqs <- rmultinom(1, n, rep(1, nrow(data)))
   lm1(formula, data, freqs)
@@ -77,6 +88,9 @@ lm_each_boot <- function(formula, data, n) {
 
 
 #' estimate the regression estimates based on given the number of repetitions
+#'
+#' @param freqs vector
+#
 lm1 <- function(formula, data, freqs) {
   # drop the original closure of formula,
   # otherwise the formula will pick a wront variable from the global scope.
@@ -87,12 +101,18 @@ lm1 <- function(formula, data, freqs) {
 
 
 #' compute the coefficients from fit
+#'
+#' @param fit model
+#'
 blbcoef <- function(fit) {
   coef(fit)
 }
 
 
 #' compute sigma from fit
+#'
+#' @param fit model
+#'
 blbsigma <- function(fit) {
   p <- fit$rank
   y <- model.extract(fit$model, "response")
@@ -100,7 +120,6 @@ blbsigma <- function(fit) {
   w <- fit$weights
   sqrt(sum(w * (e^2)) / (sum(w) - p))
 }
-
 
 #' @export
 #' @method print blblm
@@ -110,8 +129,12 @@ print.blblm <- function(x, ...) {
 }
 
 
+#' compute sigma from fit
+#'
+#' @param fit model
+#'
 #' @export
-#' @method sigma blblm
+#' @method sigma blbglm
 sigma.blblm <- function(fit, confidence = FALSE, level = 0.95, ...) {
   est <- fit$estimates
   sigma <- mean(map_dbl(est, ~ mean(map_dbl(., "sigma"))))
@@ -126,16 +149,24 @@ sigma.blblm <- function(fit, confidence = FALSE, level = 0.95, ...) {
   }
 }
 
+#' compute coef from fit
+#'
+#' @param fit model
+#'
 #' @export
-#' @method coef blblm
+#' @method coef blbglm
 coef.blblm <- function(fit, ...) {
   est <- fit$estimates
   map_mean(est, ~ map_cbind(., "coef") %>% rowMeans())
 }
 
 
+#' compute confidence interval from fit
+#'
+#' @param fit model
+#'
 #' @export
-#' @method confint blblm
+#' @method confint blbglm
 confint.blblm <- function(fit, parm = NULL, level = 0.95, ...) {
   if (is.null(parm)) {
     parm <- attr(terms(fit$formula), "term.labels")
@@ -152,8 +183,12 @@ confint.blblm <- function(fit, parm = NULL, level = 0.95, ...) {
   out
 }
 
+#' compute confidence interval from fit
+#'
+#' @param fit model
+#'
 #' @export
-#' @method predict blblm
+#' @method confint blbglm
 predict.blblm <- function(fit, new_data, confidence = FALSE, level = 0.95, ...) {
   est <- fit$estimates
   X <- model.matrix(reformulate(attr(terms(fit$formula), "term.labels")), new_data)

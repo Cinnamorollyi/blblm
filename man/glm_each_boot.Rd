@@ -6,6 +6,9 @@
 \usage{
 glm_each_boot(formula, data, n)
 }
+\arguments{
+\item{n}{integer}
+}
 \description{
 compute the regression estimates for a blb dataset
 }

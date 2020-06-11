@@ -6,6 +6,11 @@
 \usage{
 lm_each_subsample(formula, data, n, B)
 }
+\arguments{
+\item{n}{integer}
+
+\item{B}{integer}
+}
 \description{
 compute the estimates
 }

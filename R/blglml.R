@@ -1,7 +1,10 @@
+#' @name blglml
+#' @title blglml
 #' @import purrr
 #' @import stats
 #' @importFrom magrittr %>%
 #' @importFrom utils capture.output
+#' @importFrom utils read.csv
 #' @details
 #' Linear Regression with Little Bag of Bootstraps
 "_PACKAGE"
@@ -11,9 +14,15 @@
 # from https://github.com/jennybc/googlesheets/blob/master/R/googlesheets.R
 utils::globalVariables(c("."))
 
-
+#' Using parallel/normal function to do bootstrap
+#'
+#' @param data file
+#' @param Cluster cores
+#'
+#' @return list
 #' @export
-#' @method parallel bootstrap
+#' @method two bootstrap
+#' @example blbglm(mpg~cyl,data = mtcars)
 library(parallel)
 library(future)
 library(furrr)
@@ -26,8 +35,6 @@ blbglm_par <- function(formula, data, m = 10, B = 5000, Cluster) {
   class(res) <- "blbglm"
   invisible(res)
 }
-#' @export
-#' @method normal bootstrap
 blbglm <- function(formula, data, m = 10, B = 5000) {
   data_list <- split_data(data, m)
   estimates <- map(
@@ -38,13 +45,21 @@ blbglm <- function(formula, data, m = 10, B = 5000) {
   invisible(res)
 }
 
-#' read data
-data <- function(list_of_files,n){
-  df <- vroom(list_of_files, .id = "FileName")
-  df[[n]]
+#' read data in to one list
+#'
+#' @param filename "name"
+#' @param n integer
+data <- function(filename,n){
+  df <- file.path(filename, list.files(filename))
+  read.csv(df[n])
 }
 
+
+
 #' split data into m parts of approximated equal sizes
+#'
+#' @param m integer
+#'
 split_data <- function(data, m) {
   idx <- sample.int(m, nrow(data), replace = TRUE)
   data %>% split(idx)
@@ -52,12 +67,19 @@ split_data <- function(data, m) {
 
 
 #' compute the estimates
+#'
+#' @param n integer
+#' @param B integer
+#'
 glm_each_subsample <- function(formula, data, n, B) {
   replicate(B, glm_each_boot(formula, data, n), simplify = FALSE)
 }
 
 
 #' compute the regression estimates for a blb dataset
+#'
+#' @param n integer
+#'
 glm_each_boot <- function(formula, data, n) {
   freqs <- rmultinom(1, n, rep(1, nrow(data)))
   glm1(formula, data, freqs)
@@ -65,6 +87,9 @@ glm_each_boot <- function(formula, data, n) {
 
 
 #' estimate the regression estimates based on given the number of repetitions
+#'
+#' @param freqs vector
+#'
 glm1 <- function(formula, data, freqs) {
   # drop the original closure of formula,
   # otherwise the formula will pick a wront variable from the global scope.
@@ -75,12 +100,18 @@ glm1 <- function(formula, data, freqs) {
 
 
 #' compute the coefficients from fit
+#'
+#' @param fit model
+#'
 blbcoef <- function(fit) {
   coef(fit)
 }
 
 
 #' compute sigma from fit
+#'
+#' @param fit model
+#'
 blbsigma <- function(fit) {
   p <- fit$rank
   y <- model.extract(fit$model, "response")
@@ -92,15 +123,18 @@ blbsigma <- function(fit) {
 
 #' @export
 #' @method print blbglm
-print.blblm <- function(x, ...) {
+print.blbglm <- function(x, ...) {
   cat("blbglm model:", capture.output(x$formula))
   cat("\n")
 }
 
-
+#' compute sigma from fit
+#'
+#' @param fit model
+#'
 #' @export
 #' @method sigma blbglm
-sigma.blblm <- function(fit, confidence = FALSE, level = 0.95, ...) {
+sigma.blbglm <- function(fit, confidence = FALSE, level = 0.95, ...) {
   est <- fit$estimates
   sigma <- mean(map_dbl(est, ~ mean(map_dbl(., "sigma"))))
   if (confidence) {
@@ -114,6 +148,10 @@ sigma.blblm <- function(fit, confidence = FALSE, level = 0.95, ...) {
   }
 }
 
+#' compute coef from fit
+#'
+#' @param fit model
+#'
 #' @export
 #' @method coef blbglm
 coef.blbglm <- function(fit, ...) {
@@ -121,7 +159,10 @@ coef.blbglm <- function(fit, ...) {
   map_mean(est, ~ map_cbind(., "coef") %>% rowMeans())
 }
 
-
+#' compute confidence interval from fit
+#'
+#' @param fit model
+#'
 #' @export
 #' @method confint blbglm
 confint.blbglm <- function(fit, parm = NULL, level = 0.95, ...) {
@@ -140,6 +181,11 @@ confint.blbglm <- function(fit, parm = NULL, level = 0.95, ...) {
   out
 }
 
+
+#' predict bootstrap from fit
+#'
+#' @param fit model
+#'
 #' @export
 #' @method predict blbglm
 predict.blbglm <- function(fit, new_data, confidence = FALSE, level = 0.95, ...) {

@@ -8,6 +8,9 @@ split_data(data, m)
 
 split_data(data, m)
 }
+\arguments{
+\item{m}{integer}
+}
 \description{
 split data into m parts of approximated equal sizes
 

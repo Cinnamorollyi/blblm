@@ -2,10 +2,13 @@
 % Please edit documentation in R/blblm.R
 \name{sigma.blblm}
 \alias{sigma.blblm}
-\title{read data}
+\title{compute sigma from fit}
 \usage{
-\method{sigma}{blblm}(fit, confidence = FALSE, level = 0.95, ...)
+\method{sigma}{blbglm}(fit, confidence = FALSE, level = 0.95, ...)
+}
+\arguments{
+\item{fit}{model}
 }
 \description{
-read data
+compute sigma from fit
 }

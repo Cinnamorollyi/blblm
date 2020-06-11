@@ -6,6 +6,9 @@
 \usage{
 glm1(formula, data, freqs)
 }
+\arguments{
+\item{freqs}{vector}
+}
 \description{
 estimate the regression estimates based on given the number of repetitions
 }

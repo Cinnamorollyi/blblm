@@ -8,6 +8,9 @@ blbcoef(fit)
 
 blbcoef(fit)
 }
+\arguments{
+\item{fit}{model}
+}
 \description{
 compute the coefficients from fit
 
