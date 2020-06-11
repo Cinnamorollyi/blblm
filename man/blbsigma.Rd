@@ -4,12 +4,12 @@
 \alias{blbsigma}
 \title{compute sigma from fit}
 \usage{
-blbsigma(object)
+blbsigma(fit)
 
-blbsigma(object)
+blbsigma(fit)
 }
 \description{
 compute sigma from fit
 
-compute sigma from object
+compute sigma from fit
 }

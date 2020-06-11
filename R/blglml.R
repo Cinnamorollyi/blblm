@@ -38,7 +38,6 @@ blbglm <- function(formula, data, m = 10, B = 5000) {
   invisible(res)
 }
 
-
 #' split data into m parts of approximated equal sizes
 split_data <- function(data, m) {
   idx <- sample.int(m, nrow(data), replace = TRUE)
@@ -64,23 +63,23 @@ glm1 <- function(formula, data, freqs) {
   # drop the original closure of formula,
   # otherwise the formula will pick a wront variable from the global scope.
   environment(formula) <- environment()
-  object <- glm(formula, data, weights = freqs)
-  list(coef = blbcoef(object), sigma = blbsigma(object))
+  fit <- glm(formula, data, weights = freqs)
+  list(coef = blbcoef(fit), sigma = blbsigma(fit))
 }
 
 
-#' compute the coefficients from object
-blbcoef <- function(object) {
-  coef(object)
+#' compute the coefficients from fit
+blbcoef <- function(fit) {
+  coef(fit)
 }
 
 
-#' compute sigma from object
-blbsigma <- function(object) {
-  p <- object$rank
-  y <- model.extract(object$model, "response")
-  e <- fitted(object) - y
-  w <- object$weights
+#' compute sigma from fit
+blbsigma <- function(fit) {
+  p <- fit$rank
+  y <- model.extract(fit$model, "response")
+  e <- fitted(fit) - y
+  w <- fit$weights
   sqrt(sum(w * (e^2)) / (sum(w) - p))
 }
 
@@ -95,8 +94,8 @@ print.blblm <- function(x, ...) {
 
 #' @export
 #' @method sigma blbglm
-sigma.blblm <- function(object, confidence = FALSE, level = 0.95, ...) {
-  est <- object$estimates
+sigma.blblm <- function(fit, confidence = FALSE, level = 0.95, ...) {
+  est <- fit$estimates
   sigma <- mean(map_dbl(est, ~ mean(map_dbl(., "sigma"))))
   if (confidence) {
     alpha <- 1 - 0.95
@@ -111,20 +110,20 @@ sigma.blblm <- function(object, confidence = FALSE, level = 0.95, ...) {
 
 #' @export
 #' @method coef blbglm
-coef.blbglm <- function(object, ...) {
-  est <- object$estimates
+coef.blbglm <- function(fit, ...) {
+  est <- fit$estimates
   map_mean(est, ~ map_cbind(., "coef") %>% rowMeans())
 }
 
 
 #' @export
 #' @method confint blbglm
-confint.blbglm <- function(object, parm = NULL, level = 0.95, ...) {
+confint.blbglm <- function(fit, parm = NULL, level = 0.95, ...) {
   if (is.null(parm)) {
-    parm <- attr(terms(object$formula), "term.labels")
+    parm <- attr(terms(fit$formula), "term.labels")
   }
   alpha <- 1 - level
-  est <- object$estimates
+  est <- fit$estimates
   out <- map_rbind(parm, function(p) {
     map_mean(est, ~ map_dbl(., list("coef", p)) %>% quantile(c(alpha / 2, 1 - alpha / 2)))
   })
@@ -137,9 +136,9 @@ confint.blbglm <- function(object, parm = NULL, level = 0.95, ...) {
 
 #' @export
 #' @method predict blbglm
-predict.blbglm <- function(object, new_data, confidence = FALSE, level = 0.95, ...) {
-  est <- object$estimates
-  X <- model.matrix(reformulate(attr(terms(object$formula), "term.labels")), new_data)
+predict.blbglm <- function(fit, new_data, confidence = FALSE, level = 0.95, ...) {
+  est <- fit$estimates
+  X <- model.matrix(reformulate(attr(terms(fit$formula), "term.labels")), new_data)
   if (confidence) {
     map_mean(est, ~ map_cbind(., ~ X %*% .$coef) %>%
                apply(1, mean_lwr_upr, level = level) %>%
@@ -152,7 +151,7 @@ predict.blbglm <- function(object, new_data, confidence = FALSE, level = 0.95, .
 
 mean_lwr_upr <- function(x, level = 0.95) {
   alpha <- 1 - level
-  c(object = mean(x), quantile(x, c(alpha / 2, 1 - alpha / 2)) %>% set_names(c("lwr", "upr")))
+  c(fit = mean(x), quantile(x, c(alpha / 2, 1 - alpha / 2)) %>% set_names(c("lwr", "upr")))
 }
 
 map_mean <- function(.x, .f, ...) {

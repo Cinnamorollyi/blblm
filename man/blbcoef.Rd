@@ -4,12 +4,12 @@
 \alias{blbcoef}
 \title{compute the coefficients from fit}
 \usage{
-blbcoef(object)
+blbcoef(fit)
 
-blbcoef(object)
+blbcoef(fit)
 }
 \description{
 compute the coefficients from fit
 
-compute the coefficients from object
+compute the coefficients from fit
 }
