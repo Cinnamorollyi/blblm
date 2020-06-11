@@ -38,6 +38,12 @@ blbglm <- function(formula, data, m = 10, B = 5000) {
   invisible(res)
 }
 
+#' read data
+data <- function(list_of_files,n){
+  df <- vroom(list_of_files, .id = "FileName")
+  df[[n]]
+}
+
 #' split data into m parts of approximated equal sizes
 split_data <- function(data, m) {
   idx <- sample.int(m, nrow(data), replace = TRUE)

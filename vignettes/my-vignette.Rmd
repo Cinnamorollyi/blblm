@@ -12,10 +12,14 @@ library(blblm)
 
 
 ```{r}
-fit <- lm(mpg~cyl,data = mtcars)
-coef(fit)
-sigma(fit)
-conf
+fit1 <- lm(mpg~cyl,data = mtcars)
+coef(fit1)
+sigma(fit1)
+```
+```{r}
+fit2 <- glm(mpg~cyl,data = mtcars)
+coef(fit2)
+sigma(fit2)
 ```
 
 ```{r, include = FALSE}

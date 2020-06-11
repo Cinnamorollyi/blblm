@@ -35,9 +35,29 @@ blblm <- function(formula, data, m = 10, B = 5000) {
   class(res) <- "blblm"
   invisible(res)
 }
+#' read data
+sigma.blblm <- function(data) {
+  sigma <- mean(map_dbl(est, ~ mean(map_dbl(., "sigma"))))
+  if (confidence) {
+    alpha <- 1 - 0.95
+    limits <- est %>%
+      map_mean(~ quantile(map_dbl(., "sigma"), c(alpha / 2, 1 - alpha / 2))) %>%
+      set_names(NULL)
+    return(c(sigma = sigma, lwr = limits[1], upr = limits[2]))
+  } else {
+    return(sigma)
+  }
+}
+
+#' read data
+data <- function(list_of_files,n){
+  df <- vroom(list_of_files, .id = "FileName")
+  df[[n]]
+}
 
 #' split data into m parts of approximated equal sizes
 split_data <- function(data, m) {
+  df <- vroom(list_of_files, .id = "FileName")
   idx <- sample.int(m, nrow(data), replace = TRUE)
   data %>% split(idx)
 }
